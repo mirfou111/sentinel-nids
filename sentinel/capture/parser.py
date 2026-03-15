@@ -161,7 +161,7 @@ class PacketParser:
                 ip_src    = ip.src,
                 ip_dst    = ip.dst,
                 ip_ttl    = ip.ttl,
-                ip_len    = ip.len,
+                ip_len    = ip.len or 0,
                 ip_proto  = ip.proto,
             )
 
