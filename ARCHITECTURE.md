@@ -137,3 +137,62 @@ tester leurs parsers sans infrastructure réseau.
 ---
 
 *Document mis à jour à chaque étape du développement.*
+
+---
+
+## Couche 4 — Feature Engineering (extractor.py)
+
+Le ML ne comprend pas un objet Python — il comprend
+un vecteur de nombres. Le feature extractor fait
+cette transformation.
+
+### Les 27 features extraites
+```
+Catégorie        Features
+─────────────────────────────────────────────────
+Volume           nb_packets, nb_bytes, avg_packet_size,
+                 bytes_per_second, packets_per_second
+
+Durée            duration
+
+TCP Flags        nb_syn, nb_ack, nb_rst, nb_fin, nb_psh
+(absolus)
+
+TCP Flags        syn_ratio, rst_ratio
+(ratios)         → plus robustes que les valeurs absolues
+                 car indépendants du volume de trafic
+
+Diversité        unique_dst_ports → élevé = port scan
+                 unique_src_ips   → élevé = DDoS
+
+TTL              avg_ttl, min_ttl, max_ttl
+                 → peut trahir l'OS source
+
+Protocole        proto_tcp, proto_udp, proto_icmp
+(one-hot)        → encodage catégoriel sans ordinalité
+
+ICMP             nb_icmp_request, nb_icmp_reply
+
+Ports connus     is_http (80), is_https (443),
+                 is_ssh (22), is_dns (53), is_ftp (21)
+```
+
+### One-Hot Encoding
+
+Le protocole (TCP/UDP/ICMP) est une variable catégorielle.
+On ne peut pas écrire TCP=1, UDP=2, ICMP=3 car cela
+introduit une fausse ordinalité (TCP n'est pas "plus petit" qu'UDP).
+
+Solution : une colonne binaire par catégorie.
+```
+proto="TCP"  → proto_tcp=1, proto_udp=0, proto_icmp=0
+proto="UDP"  → proto_tcp=0, proto_udp=1, proto_icmp=0
+```
+
+### Règle critique : ordre des features fixe
+
+L'ordre de FEATURE_NAMES doit être identique entre
+l'entraînement et l'inférence. Si on change l'ordre,
+le modèle reçoit les mauvaises valeurs et prédit
+n'importe quoi — sans lever d'erreur.
+
