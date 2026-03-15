@@ -1,0 +1,9 @@
+venv/
+__pycache__/
+*.pyc
+*.pkl
+*.log
+data/raw/
+data/processed/
+.env
+*.pcap
